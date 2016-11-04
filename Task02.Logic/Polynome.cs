@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data.SqlTypes;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,20 +13,52 @@ namespace Task02.Logic
     /// <summary>
     /// class for polynome functionality
     /// </summary>
-    public class Polynome: IEnumerable
+    public sealed class Polynome : IEquatable<Polynome>, ICloneable
     {
-        private float[] Coefficients { get; }
+        private double[] Coefficients { get; }
+
+        private static double epsilon;
 
         private int Length => Coefficients.Length;
 
-        public Polynome(params float[] coefficients)
-        {
-            Coefficients = new float[coefficients.Length];
-            Array.Copy(coefficients, Coefficients, coefficients.Length);
+        public static double Epsilon => epsilon;
 
+        public int Degree
+        {
+            get
+            {
+                if (Length == 1) return 0;
+                int i = 0;
+                for (i = Length - 1; i >= 0; i--)
+                {
+                    if (Math.Abs(this[i]) >= epsilon) break;
+                }
+                return i;
+            }
         }
 
-        public float this[int index] => Coefficients[index];
+        public Polynome(params double[] coefficients)
+        {
+            Coefficients = new double[coefficients.Length];
+            Array.Copy(coefficients, Coefficients, coefficients.Length);
+        }
+
+        static Polynome()
+        {
+            epsilon = double.Parse(ConfigurationManager.AppSettings["epsilon"], CultureInfo.InvariantCulture);
+        }
+
+        public double this[int index]
+        {
+            get
+            {
+                if (index >= Length)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+                return Coefficients[index];
+            }
+        }
 
         /// <summary>
         /// calculate the value of polynome in point x
@@ -45,7 +79,7 @@ namespace Task02.Logic
             StringBuilder polynome = new StringBuilder();
             for (int i = 0; i < Coefficients.Length; i++)
             {
-                if (Coefficients[i] != 0)
+                if (Math.Abs(this[i]) >= epsilon)
                 {
                     if ((i != 0) && Coefficients[i] > 0)
                     {
@@ -59,21 +93,10 @@ namespace Task02.Logic
 
         public override bool Equals(object obj)
         {
-            if (!(obj is Polynome))
-            {
-                return false;
-            }
-            else if (this == obj)
-            {
-                return true;
-            }else if (obj == null)
-            {
-                return false;
-            }
-            else
-            {
-                return Coefficients.SequenceEqual(((Polynome) obj).Coefficients);
-            }
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((Polynome)obj);
         }
 
         public override int GetHashCode()
@@ -81,14 +104,32 @@ namespace Task02.Logic
             return Coefficients.Aggregate(Coefficients.Length, (current, t) => unchecked(current * 31459 + (int)t));
         }
 
-        public IEnumerator GetEnumerator()
+        public bool Equals(Polynome other)
         {
-           return Coefficients.GetEnumerator();
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            if (Length != other.Length) return false;
+            for (int i = 0; i < Length; i++)
+            {
+                if (Math.Abs(this[i] - other[i]) > epsilon) return false;
+            }
+            return true;
         }
+
+        public Polynome Clone()
+        {
+            return new Polynome(Coefficients);
+        }
+
+        object ICloneable.Clone()
+        {
+            return Clone();
+        }
+
 
         public static Polynome operator +(Polynome pol1, Polynome pol2)
         {
-            float[] temp = new float[Math.Max(pol1.Coefficients.Length, pol2.Coefficients.Length)];
+            double[] temp = new double[Math.Max(pol1.Coefficients.Length, pol2.Coefficients.Length)];
             for (int i = 0; i < pol1.Length; i++)
             {
                 temp[i] += pol1[i];
@@ -102,7 +143,7 @@ namespace Task02.Logic
 
         public static Polynome operator -(Polynome pol1, Polynome pol2)
         {
-            float[] temp = new float[Math.Max(pol1.Coefficients.Length, pol2.Coefficients.Length)];
+            double[] temp = new double[Math.Max(pol1.Length, pol2.Length)];
             for (int i = 0; i < pol1.Length; i++)
             {
                 temp[i] -= pol1[i];
@@ -116,7 +157,7 @@ namespace Task02.Logic
 
         public static Polynome operator *(Polynome pol1, float x)
         {
-            float[] temp = new float[pol1.Length];
+            double[] temp = new double[pol1.Length];
             for (int i = 0; i < temp.Length; i++)
             {
                 temp[i] = pol1[i] * x;
@@ -126,7 +167,7 @@ namespace Task02.Logic
 
         public static Polynome operator *(Polynome pol1, Polynome pol2)
         {
-            float[] temp = new float[pol1.Length + pol2.Length - 1];
+            double[] temp = new double[pol1.Length + pol2.Length - 1];
             for (int i = 0; i < pol1.Length; i++)
             {
                 for (int j = 0; j < pol2.Length; j++)
