@@ -50,6 +50,15 @@ namespace Task02.NUnitTests
                     yield return new TestCaseData(new Polynome(1, 1), new Polynome(10, -1)).Returns((new Polynome(11, 0)).GetHashCode());
                 }
             }
+            public static IEnumerable PolyEqualTest
+            {
+                get
+                {
+                    yield return new TestCaseData(new Polynome(1 + Polynome.Epsilon/2, -1,5.0,6.0,8.0), new Polynome(1, -1 + Polynome.Epsilon/2, 5,6 + Polynome.Epsilon, 8)).Returns(true);
+                    yield return new TestCaseData(new Polynome(1, 1,5,3), new Polynome(1, 1, 5 +Polynome.Epsilon/2,3-Polynome.Epsilon/2)).Returns(true);
+                    yield return new TestCaseData(new Polynome(1, 1,2), new Polynome(1, 1,2.1)).Returns(false);
+                }
+            }
 
         }
 
@@ -74,6 +83,12 @@ namespace Task02.NUnitTests
         public int Polynome_GetHash_tests(Polynome pol1, Polynome pol2)
         {
             return (pol1 + pol2).GetHashCode();
+        }
+
+        [Test, TestCaseSource(typeof(MyDataClass), nameof(MyDataClass.PolyEqualTest))]
+        public bool Polynome_Equals_tests(Polynome pol1, Polynome pol2)
+        {
+            return pol1.Equals(pol2);
         }
     }
 }

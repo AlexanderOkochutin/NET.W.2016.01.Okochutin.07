@@ -11,15 +11,15 @@ using System.Threading.Tasks;
 namespace Task02.Logic
 {
     /// <summary>
-    /// class for polynome functionality
+    /// class for polynome functionality, you can set acuracy epsilon in the app.config 
     /// </summary>
     public sealed class Polynome : IEquatable<Polynome>, ICloneable
     {
         private double[] Coefficients { get; }
 
-        private static double epsilon;
-
         private int Length => Coefficients.Length;
+
+        private static double epsilon;
 
         public static double Epsilon => epsilon;
 
@@ -27,7 +27,7 @@ namespace Task02.Logic
         {
             get
             {
-                if (Length == 1) return 0;
+                if (Length == 1 || Length ==0) return 0;
                 int i = 0;
                 for (i = Length - 1; i >= 0; i--)
                 {
@@ -45,7 +45,7 @@ namespace Task02.Logic
 
         static Polynome()
         {
-            epsilon = double.Parse(ConfigurationManager.AppSettings["epsilon"], CultureInfo.InvariantCulture);
+                epsilon = double.Parse(ConfigurationManager.AppSettings["epsilon"], CultureInfo.InvariantCulture);
         }
 
         public double this[int index]
@@ -126,7 +126,6 @@ namespace Task02.Logic
             return Clone();
         }
 
-
         public static Polynome operator +(Polynome pol1, Polynome pol2)
         {
             double[] temp = new double[Math.Max(pol1.Coefficients.Length, pol2.Coefficients.Length)];
@@ -141,18 +140,24 @@ namespace Task02.Logic
             return new Polynome(temp);
         }
 
+        public static Polynome Add(Polynome pol1, Polynome pol2)
+        {
+            return pol1 + pol2;
+        }
+
+        public static Polynome operator -(Polynome pol)
+        {
+            return pol*(-1f);
+        }
+
         public static Polynome operator -(Polynome pol1, Polynome pol2)
         {
-            double[] temp = new double[Math.Max(pol1.Length, pol2.Length)];
-            for (int i = 0; i < pol1.Length; i++)
-            {
-                temp[i] -= pol1[i];
-            }
-            for (int i = 0; i < pol2.Length; i++)
-            {
-                temp[i] -= pol2[i];
-            }
-            return new Polynome(temp);
+            return pol1 + (-pol2);
+        }
+
+        public static Polynome Substract(Polynome pol1, Polynome pol2)
+        {
+            return pol1 - pol2;
         }
 
         public static Polynome operator *(Polynome pol1, float x)
@@ -176,6 +181,11 @@ namespace Task02.Logic
                 }
             }
             return new Polynome(temp);
+        }
+
+        public static Polynome Multiply(Polynome pol1, Polynome pol2)
+        {
+            return pol1*pol2;
         }
 
     }
